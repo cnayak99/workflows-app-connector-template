@@ -27,6 +27,21 @@ if [ ! -d "config" ]; then
   mkdir -p config
 fi
 
+# Read port from app_config.yaml
+DEFAULT_PORT=2003
+if command -v grep >/dev/null && command -v awk >/dev/null && [ -f "app_config.yaml" ]; then
+  PORT=$(grep -A10 "local_development_settings:" app_config.yaml | grep "port:" | awk '{print $2}' | tr -d '[:space:]')
+  if [ -z "$PORT" ]; then
+    PORT=$DEFAULT_PORT
+    echo "No port specified in app_config.yaml. Using default port: $PORT"
+  else
+    echo "Using port from app_config.yaml: $PORT"
+  fi
+else
+  PORT=$DEFAULT_PORT
+  echo "Could not read app_config.yaml. Using default port: $PORT"
+fi
+
 # Determine the location of Dockerfile.dev
 DOCKERFILE_PATH="config/Dockerfile.dev"
 if [ ! -f "$DOCKERFILE_PATH" ] && [ -f "Dockerfile.dev" ]; then
@@ -64,11 +79,11 @@ fi
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "windows" ]]; then
     # Windows - using Command Prompt or PowerShell
     echo "Detected Windows environment"
-    echo "Starting container on port 2003..."
-    docker run --rm -p 2003:2003 -it -e ENVIRONMENT=dev -e REGION=besg --name=${APP_NAME} -v ${PWD}:/usr/src/app/ ${APP_NAME}
+    echo "Starting container on port ${PORT}..."
+    docker run --rm -p ${PORT}:${PORT} -it -e ENVIRONMENT=dev -e REGION=besg --name=${APP_NAME} -v ${PWD}:/usr/src/app/ ${APP_NAME}
 else
     # Unix/Mac environment
     echo "Detected Unix/Mac environment"
-    echo "Starting container on port 2003..."
-    docker run --rm -p 2003:2003 -it -e ENVIRONMENT=dev -e REGION=besg --name=${APP_NAME} -v $PWD:/usr/src/app/ ${APP_NAME}
+    echo "Starting container on port ${PORT}..."
+    docker run --rm -p ${PORT}:${PORT} -it -e ENVIRONMENT=dev -e REGION=besg --name=${APP_NAME} -v $PWD:/usr/src/app/ ${APP_NAME}
 fi 

@@ -26,6 +26,23 @@ if not exist "config" (
     mkdir config
 )
 
+REM Read port from app_config.yaml
+set "DEFAULT_PORT=2003"
+set "PORT=%DEFAULT_PORT%"
+
+if exist "app_config.yaml" (
+    for /f "tokens=2 delims=: " %%p in ('findstr /r "^\s*port:" app_config.yaml') do (
+        set "PORT=%%p"
+        echo Using port from app_config.yaml: !PORT!
+        goto :port_found
+    )
+    echo No port specified in app_config.yaml. Using default port: %PORT%
+) else (
+    echo Could not read app_config.yaml. Using default port: %PORT%
+)
+
+:port_found
+
 REM Determine the location of Dockerfile.dev
 set "DOCKERFILE_PATH=config\Dockerfile.dev"
 if not exist "%DOCKERFILE_PATH%" if exist "Dockerfile.dev" (
@@ -61,7 +78,7 @@ if "%IMAGE_EXISTS%"=="" (
 )
 
 REM Run the container
-echo Starting container on port 2003...
-docker run --rm -p 2003:2003 -it -e ENVIRONMENT=dev -e REGION=besg --name=%APP_NAME% -v %CD%:/usr/src/app/ %APP_NAME%
+echo Starting container on port %PORT%...
+docker run --rm -p %PORT%:%PORT% -it -e ENVIRONMENT=dev -e REGION=besg --name=%APP_NAME% -v %CD%:/usr/src/app/ %APP_NAME%
 
 endlocal 
