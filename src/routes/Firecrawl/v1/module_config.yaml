@@ -1,0 +1,3 @@
+module_settings:
+  module_name: "Website Scraper"
+  module_description: "Simple website scraper powered by Firecrawl API. Extract content from any website with advanced filtering options."

@@ -1,28 +1,64 @@
 from workflows_cdk import Response, Request
 from flask import request as flask_request
-from main import router
+import requests
+import sys
+import os
+
+# Add the project root to the path so we can import from main
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../..")))
+from main import router, app
+
+# Print debug information
+print(f"Route module loaded. Router: {router}")
+print(f"Router URL prefix: {getattr(router, 'url_prefix', 'No prefix')}")
+print(f"Router routes: {getattr(router, 'routes', 'No routes attribute')}")
+
+@router.route("/home", methods=["GET"])
+def home():
+    """
+    Simple endpoint to check if the app is working
+    """
+    return "The app is working"
+
 
 @router.route("/execute", methods=["GET", "POST"])
 def execute():
     """
     This is the function that is executed when you click on "Run" on a workflow that uses this action.
     """
+    print("Execute endpoint called")
     request = Request(flask_request)
 
     # The data object of request.data will contain all of the fields filled in the form and defined in the schema.json file.
     data = request.data
+    platform = data.get("platform")
+    post_type = data.get("post_type")
+    api_key = data.get("api_key")
+    headers = {
+        "Authorization": f"Bearer {api_key}"
+    }
+    url="https://fakestoreapi.com/products"
 
-    # Your logic here
-    # Here you can add your logic to execute the action which may consist of, for example:
-    # - calling an API
-    # - doing some calculations
-    # - doing some data transformations
-    # - validating data
-    
+    if platform == "instagram":
+        url=url
+    elif platform=="facebook":
+        url=url
+    elif platform=="twitter":
+        url=url
+    elif platform=="linkedin":
+        url=url
+    elif platform=="youtube":
+        url=url
+    else:
+        return Response(data={"error": f"Unsupported platform: {platform}"}, status_code=400)
 
-    output = []
-
-    return Response(data=output, metadata={"affected_rows": len(output)})
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        output = response.json()
+        return Response(data=output, metadata={"affected_rows": len(output)})
+    except Exception as e:
+        return Response(data={"error": str(e)}, status_code=500)
 
 
 @router.route("/content", methods=["GET", "POST"])

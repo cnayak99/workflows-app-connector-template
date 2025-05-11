@@ -1,0 +1,3 @@
+module_settings:
+  module_name: "Website Mapper"
+  module_description: "Map all URLs on a website without full crawling using Firecrawl API" 

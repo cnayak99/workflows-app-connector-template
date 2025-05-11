@@ -10,11 +10,11 @@ for %%a in (%*) do (
 REM Print Stacksync branding
 echo.
 echo [96m  ____  _             _                           [0m
-echo [96m / ___|| |_ __ _  ___| | _____ _   _ _ __   ___  [0m
-echo [96m \___ \| __/ _` |/ __| |/ / __| | | | '_ \ / __| [0m
-echo [96m  ___) | || (_| | (__|   <\__ \ |_| | | | | (__  [0m
-echo [96m |____/ \__\__,_|\___|_|\_\___/\__, |_| |_|\___| [0m
-echo [96m                               |___/             [0m
+echo [96m / ___^|^| ^|_ __ _  ___^| ^| _____ _   _ _ __   ___  [0m
+echo [96m \___ \^| __/ _` ^|/ __^| ^|/ / __^| ^| ^| ^| '_ \ / __^| [0m
+echo [96m  ___) ^| ^|^| (_^| ^| (__|   <\__ \ ^|_^| ^| ^| ^| ^| (__  [0m
+echo [96m ^|____/ \__\__,_^|\___|_^|\_\___/\__, ^|_^| ^|_^|\___^| [0m
+echo [96m                               ^|___/             [0m
 echo.
 echo [92mApp Connector Public Module[0m
 echo [94mDocumentation: https://docs.stacksync.com/workflows/app-connector[0m

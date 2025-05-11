@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "workflows_module_schema_version": "1.0.0"
+  },
+  "fields": [
+    {
+      "type": "string",
+      "id": "url",
+      "label": "Website URL",
+      "description": "The URL of the website to map",
+      "validation": {
+        "required": true
+      }
+    },
+    {
+      "type": "string",
+      "id": "search_beta",
+      "label": "Search (Beta)",
+      "description": "Enter search terms to filter results",
+      "default": ""
+    },
+    {
+      "type": "boolean",
+      "id": "include_subdomains",
+      "label": "Include subdomains",
+      "description": "Include subdomains in the map",
+      "default": false
+    },
+    {
+      "type": "boolean",
+      "id": "ignore_sitemap",
+      "label": "Ignore sitemap",
+      "description": "Ignore sitemap.xml when mapping",
+      "default": false
+    }
+  ],
+  "ui_options": {
+    "ui_order": [
+      "url",
+      "search_beta",
+      "include_subdomains",
+      "ignore_sitemap"
+    ]
+  }
+} 

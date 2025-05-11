@@ -1,0 +1,120 @@
+{
+  "metadata": {
+    "workflows_module_schema_version": "1.0.0"
+  },
+  "fields": [
+    {
+      "type": "string",
+      "id": "url",
+      "label": "Start URL",
+      "description": "The URL to start crawling from",
+      "validation": {
+        "required": true
+      }
+    },
+    {
+      "type": "number",
+      "id": "max_pages",
+      "label": "Maximum Pages",
+      "description": "Maximum number of pages to crawl (1-100)",
+      "default": 10,
+      "validation": {
+        "required": true,
+        "minimum": 1,
+        "maximum": 100
+      }
+    },
+    {
+      "type": "boolean",
+      "id": "stay_on_domain",
+      "label": "Stay on Domain",
+      "description": "Only crawl pages on the same domain as the start URL",
+      "default": true
+    },
+    {
+      "type": "boolean",
+      "id": "follow_links",
+      "label": "Follow Links",
+      "description": "Follow links to crawl further pages",
+      "default": true
+    },
+    {
+      "type": "array",
+      "id": "include_only_urls",
+      "label": "Include Only URLs (Optional)",
+      "description": "Only crawl URLs matching these patterns (supports * wildcard)",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    {
+      "type": "array",
+      "id": "exclude_urls",
+      "label": "Exclude URLs (Optional)",
+      "description": "Skip URLs matching these patterns (supports * wildcard)",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    {
+      "type": "boolean",
+      "id": "extract_main_content",
+      "label": "Extract only main content",
+      "description": "Extract only the main content (no headers, navs, footers, etc.)",
+      "default": true
+    },
+    {
+      "type": "string",
+      "id": "include_only_tags",
+      "label": "Include Only Tags (Optional)",
+      "description": "Comma-separated list of CSS selectors to include (e.g., 'article, .main-content')",
+      "default": ""
+    },
+    {
+      "type": "string",
+      "id": "exclude_tags",
+      "label": "Exclude Tags (Optional)",
+      "description": "Comma-separated list of CSS selectors to exclude (e.g., 'nav, footer')",
+      "default": ""
+    },
+    {
+      "type": "number",
+      "id": "wait_for",
+      "label": "Wait For (ms)",
+      "description": "Time to wait for JavaScript to load (milliseconds)",
+      "default": 0
+    },
+    {
+      "type": "number",
+      "id": "timeout",
+      "label": "Timeout (ms)",
+      "description": "Maximum time to wait for each page (milliseconds)",
+      "default": 30000
+    },
+    {
+      "type": "boolean",
+      "id": "stealth_mode",
+      "label": "Use stealth mode",
+      "description": "Use stealth mode to avoid detection (5 credits/page)",
+      "default": false
+    }
+  ],
+  "ui_options": {
+    "ui_order": [
+      "url",
+      "max_pages",
+      "stay_on_domain",
+      "follow_links",
+      "include_only_urls",
+      "exclude_urls",
+      "extract_main_content",
+      "include_only_tags",
+      "exclude_tags",
+      "wait_for",
+      "timeout",
+      "stealth_mode"
+    ]
+  }
+} 

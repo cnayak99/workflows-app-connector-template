@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "workflows_module_schema_version": "1.0.0"
+  },
+  "fields": [
+    {
+      "type": "string",
+      "id": "query",
+      "label": "Search Query",
+      "description": "Enter your search query",
+      "validation": {
+        "required": true
+      }
+    },
+    {
+      "type": "number",
+      "id": "limit",
+      "label": "Result Limit",
+      "description": "Maximum number of search results to return (1-10)",
+      "default": 5,
+      "validation": {
+        "min": 1,
+        "max": 10
+      }
+    },
+    {
+      "type": "string",
+      "id": "lang",
+      "label": "Language",
+      "description": "Language code for search results (e.g., en, fr, de)",
+      "default": "en"
+    },
+    {
+      "type": "string",
+      "id": "country",
+      "label": "Country",
+      "description": "Country code for localized results (e.g., us, gb, fr)",
+      "default": "us"
+    },
+    {
+      "type": "string",
+      "id": "tbs",
+      "label": "Time Range",
+      "description": "Filter results by time",
+      "default": "",
+      "enum": ["", "qdr:h", "qdr:d", "qdr:w", "qdr:m", "qdr:y"],
+      "enumNames": ["Any time", "Past hour", "Past 24 hours", "Past week", "Past month", "Past year"]
+    },
+    {
+      "type": "boolean",
+      "id": "scrape_results",
+      "label": "Scrape Results",
+      "description": "Get full content from search results",
+      "default": true
+    }
+  ],
+  "ui_options": {
+    "ui_order": [
+      "query",
+      "limit",
+      "lang",
+      "country",
+      "tbs",
+      "scrape_results"
+    ]
+  }
+} 

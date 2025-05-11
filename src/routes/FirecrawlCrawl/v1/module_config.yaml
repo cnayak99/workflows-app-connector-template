@@ -1,0 +1,3 @@
+module_settings:
+  module_name: "Website Crawler"
+  module_description: "Crawl websites and extract data from multiple pages using Firecrawl API" 

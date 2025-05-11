@@ -1,0 +1,89 @@
+{
+  "metadata": {
+    "workflows_module_schema_version": "1.0.0"
+  },
+  "fields": [
+    {
+      "id": "url",
+      "type": "string",
+      "label": "Website URL",
+      "validation": {
+        "required": true,
+        "format": "uri"
+      },
+      "placeholder": "https://example.com",
+      "help_text": "Enter the full URL of the website to scrape (include https:// or http://)"
+    },
+    {
+      "id": "exclude_tags",
+      "type": "string",
+      "label": "Exclude Tags",
+      "validation": {
+        "required": false
+      },
+      "placeholder": "script,style,noscript,iframe",
+      "help_text": "Comma-separated list of HTML tags to exclude from the scrape results"
+    },
+    {
+      "id": "include_only_tags",
+      "type": "string",
+      "label": "Include Only Tags",
+      "validation": {
+        "required": false
+      },
+      "placeholder": "p,h1,h2,h3,a",
+      "help_text": "Comma-separated list of HTML tags to include (all others will be excluded)"
+    },
+    {
+      "id": "wait_for",
+      "type": "number",
+      "label": "Wait For (ms)",
+      "validation": {
+        "required": false
+      },
+      "default_value": 0,
+      "help_text": "Time to wait for JavaScript to load in milliseconds (useful for dynamic content)"
+    },
+    {
+      "id": "timeout",
+      "type": "number",
+      "label": "Timeout (ms)",
+      "validation": {
+        "required": false
+      },
+      "default_value": 30000,
+      "help_text": "Maximum time to wait before aborting the request in milliseconds"
+    },
+    {
+      "id": "extract_main_content",
+      "type": "boolean",
+      "label": "Extract only main content (no headers, navs, footers, etc.)",
+      "validation": {
+        "required": false
+      },
+      "default_value": false,
+      "help_text": "Automatically detect and extract only the main content of the page"
+    },
+    {
+      "id": "stealth_mode",
+      "type": "boolean",
+      "label": "Use stealth mode (5 credits/page)",
+      "validation": {
+        "required": false
+      },
+      "default_value": false,
+      "help_text": "Enable stealth browsing to avoid detection (costs 5 credits per page)"
+    }
+  ],
+  "ui_options": {
+    "ui_order": [
+      "url",
+      "exclude_tags", 
+      "include_only_tags", 
+      "wait_for", 
+      "timeout",
+      "extract_main_content",
+      "stealth_mode"
+    ]
+  }
+} 

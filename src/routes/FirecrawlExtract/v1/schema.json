@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "workflows_module_schema_version": "1.0.0"
+  },
+  "fields": [
+    {
+      "type": "string",
+      "id": "url",
+      "label": "URL",
+      "description": "The webpage URL to extract elements from",
+      "validation": {
+        "required": true
+      }
+    },
+    {
+      "type": "string",
+      "id": "extract_prompt",
+      "label": "Extraction Prompt",
+      "description": "Describe what elements or data to extract from the webpage",
+      "validation": {
+        "required": true
+      }
+    },
+    {
+      "type": "boolean",
+      "id": "enable_web_search",
+      "label": "Enable Web Search",
+      "description": "Allow the extraction to search related web pages for more complete results",
+      "default": false
+    },
+    {
+      "type": "boolean",
+      "id": "enable_agent",
+      "label": "Enable FIRE-1 Agent",
+      "description": "Use Firecrawl's FIRE-1 agent for improved extraction capabilities",
+      "default": true
+    }
+  ],
+  "ui_options": {
+    "ui_order": [
+      "url",
+      "extract_prompt",
+      "enable_web_search",
+      "enable_agent"
+    ]
+  }
+} 
