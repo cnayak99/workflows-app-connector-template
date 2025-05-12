@@ -50,4 +50,3 @@ CMD ["/usr/src/app/main.py"]
 
 # CONNECT to container terminal
 # docker exec -it workflows-app-connector bash
-

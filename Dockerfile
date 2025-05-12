@@ -12,6 +12,7 @@ RUN apt-get update && \
 # Install workflows-cdk package
 RUN pip install git+https://github.com/stacksyncdata/workflows-cdk.git@prod
 
+
 # install dependencies
 COPY requirements.txt ./
 RUN pip3 install -r requirements.txt
@@ -26,11 +27,11 @@ EXPOSE 8080
 CMD exec gunicorn --bind 8080:8080
 
 # make the entrypoint executable
-RUN chmod +x ./entrypoint.sh
+RUN chmod +x config/entrypoint.sh
 
 # run the entrypoint to start the Guicorn production server
-ENTRYPOINT ["sh", "entrypoint.sh"]
-
+ENTRYPOINT ["sh", "config/entrypoint.sh"]
+# 
 
 # RUN in interactive mode
 # UNIX: docker run --rm -p 2001:8080 -it -e ENVIRONMENT=dev -e REGION=besg -v $PWD:/usr/src/app/ workflows-app-example

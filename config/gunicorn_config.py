@@ -8,4 +8,4 @@ enable_stdio_inheritance = True
 
 workers = 2
 threads = 1
-timeout = 360
+timeout = 36000

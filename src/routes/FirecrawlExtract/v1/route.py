@@ -21,321 +21,20 @@ def execute():
     - Extract structured data using LLM-based extraction
     - Optionally use web search for more complete results
     - Optionally use FIRE-1 agent for improved extraction
+    
+    This has been updated to use the job_execute endpoint for improved functionality
     """
     print("=== FirecrawlExtract.execute ===")
-    try:
-        start_time = time.time()
-        
-        print(f"Request method: {flask_request.method}")
-        print(f"Content-Type: {flask_request.headers.get('Content-Type')}")
-        print(f"is_json: {flask_request.is_json}")
-        
-        # For POST requests
-        if flask_request.is_json and flask_request.method == "POST":
-            print("Received JSON POST request")
-            data = flask_request.get_json(force=True)  # Force parsing even if content-type is incorrect
-            print(f"Received data: {data}")
-            
-            # Check if data is nested inside a 'data' field
-            if 'data' in data and isinstance(data['data'], dict):
-                data = data['data']
-                print(f"Using nested data: {data}")
-        else:
-            # For GET requests or non-JSON POST requests
-            print(f"Received non-JSON request: {flask_request.method}")
-            print(f"Request data: {flask_request.data}")
-            print(f"Request form: {flask_request.form}")
-            print(f"Request values: {flask_request.values}")
-            
-            try:
-                # Try to parse raw data as JSON
-                if flask_request.data:
-                    data = json.loads(flask_request.data)
-                    print(f"Parsed data from request.data: {data}")
-                    
-                    # Check if data is nested inside a 'data' field
-                    if 'data' in data and isinstance(data['data'], dict):
-                        data = data['data']
-                        print(f"Using nested data: {data}")
-                else:
-                    data = {}
-                    for key in flask_request.values:
-                        data[key] = flask_request.values[key]
-                    print(f"Processed data from values: {data}")
-            except:
-                data = {}
-                for key in flask_request.values:
-                    data[key] = flask_request.values[key]
-                print(f"Processed data from values: {data}")
-        
-        # Get URL (required)
-        url = data.get("url")
-        print(f"Extracted URL: {url}")
-        if not url:
-            print("URL is missing, returning 400 error")
-            return Response.error(error="URL is required", status_code=400)
-        
-        # Get extraction prompt (required)
-        extract_prompt = data.get("extract_prompt")
-        print(f"Extracted prompt: {extract_prompt}")
-        if not extract_prompt:
-            print("Extraction prompt is missing, returning 400 error")
-            return Response.error(error="Extraction prompt is required", status_code=400)
-        
-        # Special case for YC W24 consumer companies exact request
-        is_exact_yc_w24_consumer_request = (
-            url == "https://ycombinator.com/companies/*" and 
-            extract_prompt == "Get me the W24 companies that are on the consumer space"
-        )
-        
-        if is_exact_yc_w24_consumer_request:
-            print("Detected exact match for YC W24 consumer companies request")
-            # Return the exact expected output format
-            execution_time = time.time() - start_time
-            result = {
-                "extracted_elements": {
-                    "companies": [
-                        "K-Scale Labs",
-                        "Same",
-                        "CrowdVolt",
-                        "Pico",
-                        "OddsView",
-                        "Magic Hour",
-                        "Lumona",
-                        "Aqua Voice",
-                        "Pernell",
-                        "Rove",
-                        "Sonauto",
-                        "BiteSight",
-                        "PocketPod",
-                        "Focal",
-                        "HeartByte",
-                        "Soundry AI",
-                        "Browser Buddy",
-                        "Wuri",
-                        "Aedilic",
-                        "Lemon Slice",
-                        "Eggnog",
-                        "Fractal Labs",
-                        "Tuesday Lab",
-                        "Happenstance",
-                        "PurplePages",
-                        "ego",
-                        "jo",
-                        "Arcane"
-                    ]
-                },
-                "extraction_info": {
-                    "url": url,
-                    "prompt": extract_prompt,
-                    "execution_time_seconds": round(execution_time, 2),
-                    "parameters": {
-                        "formats": ["json"],
-                        "jsonOptions": {
-                            "mode": "llm",
-                            "prompt": extract_prompt
-                        },
-                        "url": url
-                    }
-                }
-            }
-            return Response.success(body=result)
-        
-        # Special case for YC W24 Consumer companies (more general)
-        is_yc_w24_consumer_request = (
-            "ycombinator.com/companies" in url and 
-            "w24" in extract_prompt.lower() and 
-            "consumer" in extract_prompt.lower()
-        )
-        
-        if is_yc_w24_consumer_request:
-            print("Detected YC W24 Consumer companies request - using optimized approach")
-            return handle_yc_w24_consumer_extraction(url, extract_prompt, data.get("enable_agent", True), start_time)
-        
-        # Standard extraction approach for other cases
-        # Set up Firecrawl API request headers
-        headers = {
-            "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        # Check if we should use the extract endpoint with web search or use the scrape endpoint
-        enable_web_search = data.get("enable_web_search")
-        enable_agent = data.get("enable_agent", True)  # Default to True
-        
-        # Convert values to boolean if needed
-        if isinstance(enable_web_search, str):
-            enable_web_search = enable_web_search.lower() in ["true", "1", "yes", "on"]
-        if isinstance(enable_agent, str):
-            enable_agent = enable_agent.lower() in ["true", "1", "yes", "on"]
-            
-        # Build payload based on the selected endpoint
-        if enable_web_search:
-            # Use the /extract endpoint for web search capability
-            endpoint_url = f"{FIRECRAWL_BASE_URL}/extract"
-            payload = {
-                "urls": [url],
-                "prompt": extract_prompt
-            }
-            
-            # Add FIRE-1 agent if enabled
-            if enable_agent:
-                payload["agent"] = {
-                    "model": "FIRE-1"
-                }
-        else:
-            # Use the /scrape endpoint for standard extraction
-            endpoint_url = f"{FIRECRAWL_BASE_URL}/scrape"
-            
-            # Check if URL contains wildcards (like *) which is not supported directly by scrape
-            if "*" in url:
-                # Use a different approach for URLs with wildcards
-                # For YC companies list, we need to use a specific URL without wildcards
-                # Replace the wildcard with a specific pattern
-                clean_url = url.replace("*", "")
-                if "ycombinator.com/companies" in url:
-                    clean_url = "https://www.ycombinator.com/companies"
-                
-                payload = {
-                    "url": clean_url,
-                    "formats": ["json"],
-                    "jsonOptions": {
-                        "prompt": extract_prompt,
-                        "mode": "llm"
-                    }
-                }
-            else:
-                payload = {
-                    "url": url,
-                    "formats": ["json"],
-                    "jsonOptions": {
-                        "prompt": extract_prompt,
-                        "mode": "llm"
-                    }
-                }
-            
-            # Add FIRE-1 agent if enabled
-            if enable_agent:
-                payload["agent"] = {
-                    "model": "FIRE-1",
-                    "prompt": extract_prompt
-                }
-                
-            # Check for login credentials
-            login_required = data.get("login_required", False)
-            login_email = data.get("login_email")
-            login_password = data.get("login_password")
-            
-            # Add actions for login if required in the correct format
-            if login_required and login_email and login_password:
-                # Note: The Firecrawl API only accepts 'wait' or 'click' action types
-                # We'll need to skip the input actions and use other methods if needed
-                payload["actions"] = [
-                    # Wait for page to load initially
-                    {
-                        "type": "wait",
-                        "duration": 1000,
-                        "description": "Wait for login page to load"
-                    },
-                    # Click login button
-                    {
-                        "type": "click",
-                        "selector": "button[type='submit'], input[type='submit'], button:contains('Login'), button:contains('Sign in'), button:contains('Log in')",
-                        "description": "Click login button"
-                    },
-                    # Wait after clicking login
-                    {
-                        "type": "wait",
-                        "duration": 3000,
-                        "description": "Wait for page to load after login"
-                    }
-                ]
-                
-                # Increase waiting time for login processes
-                payload["waitFor"] = data.get("wait_after_login", 5000)  # Default 5 seconds
-        
-        print(f"Final payload to Firecrawl API: {json.dumps(payload, indent=2)}")
-        print(f"Endpoint URL: {endpoint_url}")
-        
-        # Call Firecrawl API
-        response = requests.post(endpoint_url, headers=headers, json=payload)
-        print(f"Response status: {response.status_code}")
-        
-        # Print response content for debugging, even if it fails
-        try:
-            print(f"Response content preview: {response.text[:500]}...")
-        except:
-            print("Could not print response content")
-        
-        # Raise an exception if the response is not successful
-        response.raise_for_status()
-        
-        # Parse the response
-        output = response.json()
-        
-        # Add execution metadata
-        execution_time = time.time() - start_time
-        
-        # Extract the data from the response based on the endpoint used
-        extracted_data = {}
-        if enable_web_search:
-            # For /extract endpoint, data is directly in the response
-            if "data" in output:
-                extracted_data = output["data"]
-        else:
-            # For /scrape endpoint, data is in the json field
-            if "data" in output and "json" in output["data"]:
-                extracted_data = output["data"]["json"]
-        
-        # Format response
-        result = {
-            "extracted_elements": extracted_data,
-            "extraction_info": {
-                "url": url,
-                "prompt": extract_prompt,
-                "web_search_enabled": enable_web_search,
-                "agent_enabled": enable_agent,
-                "api_endpoint": endpoint_url,
-                "execution_time_seconds": round(execution_time, 2)
-            }
-        }
-        
-        print(f"Returning success response with extracted elements")
-        return Response.success(body=result)
-            
-    except Exception as e:
-        print(f"Error occurred: {str(e)}")
-        error_message = str(e)
-        error_data = {"error": error_message}
-        
-        try:
-            if hasattr(e, 'response') and e.response:
-                try:
-                    error_response = e.response.json() 
-                    error_data = {
-                        "error": error_response.get('error', error_message),
-                        "status_code": e.response.status_code,
-                        "details": error_response
-                    }
-                except:
-                    error_data = {
-                        "error": error_message,
-                        "status_code": e.response.status_code if hasattr(e.response, 'status_code') else 500,
-                        "response_text": e.response.text[:1000] if hasattr(e.response, 'text') else "No response text"
-                    }
-                print(f"Response error details: {json.dumps(error_data, indent=2)}")
-        except:
-            pass
-        
-        # Add execution metadata to error response
-        execution_time = time.time() - start_time if 'start_time' in locals() else 0
-        error_data["execution_metadata"] = {
-            "execution_time_seconds": round(execution_time, 2),
-            "success": False
-        }
-        
-        print(f"Returning error response: {error_data}")
-        return Response.error(error=error_data, status_code=500)
+    print("Redirecting to job_execute endpoint for improved extraction capabilities")
+    
+    # Call the job_execute function directly to handle the request
+    return job_execute()
+    
+# Original execute method implementation is commented out
+# def execute_original():
+#    try:
+#        start_time = time.time()
+#        ...
 
 def handle_yc_w24_consumer_extraction(url, extract_prompt, enable_agent, start_time):
     """
@@ -577,3 +276,217 @@ def handle_yc_w24_consumer_extraction(url, extract_prompt, enable_agent, start_t
 def content():
     """Provide content metadata for the UI"""
     return Response.success(body={"content_objects": []}) 
+
+@router.route("/job_execute", methods=["GET", "POST"])
+def job_execute():
+    """
+    Execute a Firecrawl extraction job that requires authentication and returns a job ID.
+    """
+    print("=== FirecrawlExtract.job_execute ===")
+    try:
+        start_time = time.time()
+        
+        print(f"Request method: {flask_request.method}")
+        print(f"Content-Type: {flask_request.headers.get('Content-Type')}")
+        print(f"is_json: {flask_request.is_json}")
+        
+        # Process request data
+        if flask_request.is_json and flask_request.method == "POST":
+            print("Received JSON POST request")
+            data = flask_request.get_json(force=True)
+            print(f"Received data: {data}")
+            
+            # Check if data is nested inside a 'data' field
+            if 'data' in data and isinstance(data['data'], dict):
+                data = data['data']
+                print(f"Using nested data: {data}")
+        else:
+            # For GET requests or non-JSON POST requests
+            print(f"Received non-JSON request: {flask_request.method}")
+            
+            try:
+                # Try to parse raw data as JSON
+                if flask_request.data:
+                    data = json.loads(flask_request.data)
+                    print(f"Parsed data from request.data: {data}")
+                    
+                    # Check if data is nested inside a 'data' field
+                    if 'data' in data and isinstance(data['data'], dict):
+                        data = data['data']
+                        print(f"Using nested data: {data}")
+                else:
+                    data = {}
+                    for key in flask_request.values:
+                        data[key] = flask_request.values[key]
+                    print(f"Processed data from values: {data}")
+            except:
+                data = {}
+                for key in flask_request.values:
+                    data[key] = flask_request.values[key]
+                print(f"Processed data from values: {data}")
+        
+        # Get URL (required)
+        url = data.get("url")
+        
+        # Check for URLs array which is used instead of single URL in extract API
+        urls = data.get("urls")
+        if urls and isinstance(urls, list) and len(urls) > 0:
+            # Use the first URL from the list
+            url = urls[0]
+        
+        print(f"Extracted URL: {url}")
+        if not url and not urls:
+            print("URL is missing, returning 400 error")
+            return Response.error(error="URL is required (either 'url' or 'urls' parameter)", status_code=400)
+        
+        # Get extraction prompt (required)
+        extract_prompt = data.get("extract_prompt", data.get("prompt"))
+        print(f"Extracted prompt: {extract_prompt}")
+        if not extract_prompt:
+            print("Extraction prompt is missing, returning 400 error")
+            return Response.error(error="Extraction prompt is required (either 'extract_prompt' or 'prompt' parameter)", status_code=400)
+        
+        # Set up Firecrawl API request headers
+        headers = {
+            "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        # Build the payload for the extract API
+        payload = {
+            "urls": urls if urls else [url],
+            "auxiliarPrompt": extract_prompt
+        }
+        
+        # Check for schema parameter
+        schema = data.get("schema")
+        if schema:
+            payload["schema"] = schema
+            
+        # Add agent configuration (required for login functionality)
+        agent_config = {
+            "model": "FIRE-1"
+        }
+        
+        # Add the agent configuration to the payload
+        payload["agent"] = agent_config
+        payload["enableWebSearch"] = False
+        
+        print(f"Calling Firecrawl /extract API with payload: {json.dumps(payload, indent=2)}")
+        
+        # Use the correct Firecrawl API URL from the constant
+        endpoint_url = f"{FIRECRAWL_BASE_URL}/extract"
+        print(f"Endpoint URL: {endpoint_url}")
+        
+        # Call the Firecrawl extract API
+        response = requests.post(endpoint_url, headers=headers, json=payload)
+        
+        # Check for errors
+        if response.status_code != 200:
+            print(f"Error from Firecrawl API: {response.status_code}")
+            print(f"Response: {response.text}")
+            return Response.error(
+                error=f"Firecrawl API error: {response.status_code}",
+                details=response.text,
+                status_code=response.status_code
+            )
+        
+        # Parse the response
+        result = response.json()
+        print(f"Success response from first API call: {json.dumps(result, indent=2)}")
+        
+        # Get the job ID from the response
+        job_id = result.get("id")
+        
+        if not job_id:
+            print("No job ID found in response")
+            return Response.error(
+                error="No job ID found in Firecrawl API response",
+                details=result,
+                status_code=500
+            )
+        
+        # Print the job ID
+        print(f"Job ID: {job_id}")
+        
+        # Calculate execution time
+        execution_time = time.time() - start_time
+        
+        # Prepare the response with the job ID and metadata
+        response_data = {
+            "job_id": job_id,
+            "status": result.get("status", "unknown"),
+            "expires_at": result.get("expiresAt"),
+            "job_info": {
+                "url": url,
+                "prompt": extract_prompt,
+                "execution_time_seconds": round(execution_time, 2)
+            }
+        }
+        
+        return Response.success(body=response_data)
+    
+    except Exception as e:
+        print(f"Error in job_execute: {str(e)}")
+        return Response.error(error=str(e), status_code=500)
+
+@router.route("/job_status/<job_id>", methods=["GET"])
+def job_status(job_id):
+    """
+    Check the status of a Firecrawl extraction job by its ID.
+    
+    Args:
+        job_id: The ID of the extraction job to check
+        
+    Returns:
+        The current status and results (if available) of the extraction job
+    """
+    print(f"=== FirecrawlExtract.job_status for job {job_id} ===")
+    try:
+        start_time = time.time()
+        
+        if not job_id:
+            print("Job ID is missing")
+            return Response.error(error="Job ID is required", status_code=400)
+        
+        # Set up Firecrawl API request headers
+        headers = {
+            "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        # Call the Firecrawl extract status API
+        endpoint_url = f"{FIRECRAWL_BASE_URL}/extract/{job_id}"
+        response = requests.get(endpoint_url, headers=headers)
+        
+        # Check for errors
+        if response.status_code != 200:
+            print(f"Error from Firecrawl API: {response.status_code}")
+            print(f"Response: {response.text}")
+            return Response.error(
+                error=f"Firecrawl API error: {response.status_code}",
+                details=response.text,
+                status_code=response.status_code
+            )
+        
+        # Parse the response
+        result = response.json()
+        print(f"Success response: {json.dumps(result, indent=2)}")
+        
+        # Calculate execution time
+        execution_time = time.time() - start_time
+        
+        # Prepare the response with the job status and data
+        response_data = {
+            "job_id": job_id,
+            "status": result.get("status", "unknown"),
+            "data": result.get("data"),
+            "error": result.get("error"),
+            "execution_time_seconds": round(execution_time, 2),
+            "raw_response": result  # Include the full response for debugging
+        }
+        
+        return Response.success(body=response_data)
+    except Exception as e:
+        print(f"Error in job_status: {str(e)}")
+        return Response.error(error=str(e), status_code=500) 
